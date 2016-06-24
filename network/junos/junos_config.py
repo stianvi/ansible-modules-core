@@ -32,6 +32,13 @@ description:
     configuration and only changes are pushed to the device.
 extends_documentation_fragment: junos
 options:
+  mode:
+    description:
+      - By default you'll work in a shared candidate configuration. The 
+        C(mode) argument can be set to either private, dynamic, batch or
+        exclusive.
+    required: false
+    default: None
   lines:
     description:
       - The path to the config source.  The source can be either a
@@ -140,6 +147,7 @@ def diff_config(candidate, config):
 def main():
 
     argument_spec = dict(
+        mode=dict(default=None, choices=['private', 'dynamic', 'batch', 'exclusive']),
         lines=dict(type='list'),
         rollback=dict(type='int'),
         zeroize=dict(default=False, type='bool'),
@@ -167,6 +175,7 @@ def main():
     else:
         action = 'merge'
 
+    mode = module.params['mode']
     lines = module.params['lines']
     commit = not module.check_mode
 
@@ -179,7 +188,7 @@ def main():
         if updates:
             updates = '\n'.join(updates)
             diff = module.load_config(updates, action=action, comment=comment,
-                    format='set', commit=commit, confirm=confirm)
+                    format='set', commit=commit, confirm=confirm, mode=mode)
 
             if diff:
                 results['changed'] = True
