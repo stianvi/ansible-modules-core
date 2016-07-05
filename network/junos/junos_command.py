@@ -79,7 +79,7 @@ options:
         output and apply the conditionals path to the result set.
     required: false
     default: 'xml'
-    choices: ['xml', 'text']
+    choices: ['xml', 'text', 'json']
 requirements:
   - junos-eznc
 notes:
@@ -188,7 +188,7 @@ def main():
     spec = dict(
         commands=dict(type='list'),
         rpcs=dict(type='list'),
-        format=dict(default='xml', choices=['text', 'xml']),
+        format=dict(default='xml', choices=['text', 'xml', 'json']),
         waitfor=dict(type='list'),
         retries=dict(default=10, type='int'),
         interval=dict(default=1, type='int'),
