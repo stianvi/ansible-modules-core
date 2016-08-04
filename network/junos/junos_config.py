@@ -39,6 +39,8 @@ options:
         exclusive.
     required: false
     default: None
+    choices: ['private', 'dynamic', 'batch', 'exclusive']
+    version_added: "2.2"
   lines:
     description:
       - The path to the config source.  The source can be either a
