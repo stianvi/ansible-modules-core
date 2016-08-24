@@ -32,6 +32,15 @@ description:
     configuration and only changes are pushed to the device.
 extends_documentation_fragment: junos
 options:
+  mode:
+    description:
+      - By default you'll work in a shared candidate configuration. The 
+        C(mode) argument can be set to either private, dynamic, batch or
+        exclusive.
+    required: false
+    default: None
+    choices: ['private', 'dynamic', 'batch', 'exclusive']
+    version_added: "2.2"
   lines:
     description:
       - The path to the config source.  The source can be either a
@@ -109,6 +118,7 @@ EXAMPLES = """
 """
 
 import re
+from jnpr.junos.utils.config import Config
 
 DEFAULT_COMMENT = 'configured by junos_config'
 
@@ -137,9 +147,39 @@ def diff_config(candidate, config):
 
     return list(updates)
 
+
+    def load_config(candidate, action='replace', comment=None,
+            confirm=None, format='text', commit=True, mode=None):
+
+        merge = action == 'merge'
+        overwrite = action == 'overwrite'
+
+        try:
+            with Config(self.device, mode) as self.config:
+
+                try:
+                    self.config.load(candidate, format=format, merge=merge,
+                            overwrite=overwrite)
+                except ConfigLoadError:
+                    exc = get_exception()
+                    msg = 'Unable to load config: {0}'.format(str(exc))
+                    self._fail(msg=msg)
+
+                diff = self.config.diff()
+                self.check_config()
+                if commit and diff:
+                    self.commit_config(comment=comment, confirm=confirm)
+
+        except (ValueError, RpcError):
+            exc = get_exception()
+            self._fail('Unable to get cli output: %s' % str(exc))
+
+        return diff
+
 def main():
 
     argument_spec = dict(
+        mode=dict(default=None, choices=['private', 'dynamic', 'batch', 'exclusive']),
         lines=dict(type='list'),
         rollback=dict(type='int'),
         zeroize=dict(default=False, type='bool'),
@@ -167,6 +207,7 @@ def main():
     else:
         action = 'merge'
 
+    mode = module.params['mode']
     lines = module.params['lines']
     commit = not module.check_mode
 
@@ -178,8 +219,12 @@ def main():
 
         if updates:
             updates = '\n'.join(updates)
-            diff = module.load_config(updates, action=action, comment=comment,
-                    format='set', commit=commit, confirm=confirm)
+            diff = load_config(updates, action=action, comment=comment,
+                    format='set', commit=commit, confirm=confirm, mode=mode)
+            # skip load_config@junos due to py25 requirements.
+            #diff = module.load_config(updates, action=action, comment=comment,
+            #        format='set', commit=commit, confirm=confirm, mode=mode)
+
 
             if diff:
                 results['changed'] = True
