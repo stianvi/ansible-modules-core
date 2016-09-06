@@ -94,7 +94,7 @@ options:
         output and apply the conditionals path to the result set.
     required: false
     default: 'xml'
-    choices: ['xml', 'text']
+    choices: ['xml', 'text', 'json']
 requirements:
   - junos-eznc
 notes:
@@ -183,9 +183,9 @@ def parse(module, command_type):
             item = dict(command=item, output=None)
         elif 'command' not in item:
             module.fail_json(msg='command keyword argument is required')
-        elif item.get('output') not in [None, 'text', 'xml']:
+        elif item.get('output') not in [None, 'text', 'xml', 'json']:
             module.fail_json(msg='invalid output specified for command'
-                                 'Supported values are `text` or `xml`')
+                                 'Supported values are `text`, `xml` or `json`')
         elif not set(item.keys()).issubset(VALID_KEYS[command_type]):
             module.fail_json(msg='unknown command keyword specified.  Valid '
                                  'values are %s' % ', '.join(VALID_KEYS[command_type]))
@@ -208,7 +208,7 @@ def main():
         commands=dict(type='list'),
         rpcs=dict(type='list'),
 
-        display=dict(default='xml', choices=['text', 'xml'],
+        display=dict(default='xml', choices=['text', 'xml', 'json'],
                      aliases=['format', 'output']),
 
         wait_for=dict(type='list', aliases=['waitfor']),
