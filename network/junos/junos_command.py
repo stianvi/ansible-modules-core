@@ -97,6 +97,7 @@ options:
     choices: ['xml', 'text', 'json']
 requirements:
   - junos-eznc
+  - format choice json requires junos >= 14.2
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed
